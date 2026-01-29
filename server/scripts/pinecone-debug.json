@@ -1,0 +1,22 @@
+{
+  "indexes": [
+    {
+      "name": "second-brain",
+      "dimension": 768,
+      "metric": "cosine",
+      "host": "second-brain-7e002cp.svc.aped-4627-b74a.pinecone.io",
+      "deletionProtection": "disabled",
+      "spec": {
+        "serverless": {
+          "cloud": "aws",
+          "region": "us-east-1"
+        }
+      },
+      "status": {
+        "ready": true,
+        "state": "Ready"
+      },
+      "vectorType": "dense"
+    }
+  ]
+}

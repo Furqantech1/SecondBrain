@@ -58,8 +58,11 @@ const Profile = () => {
     };
 
     const handleDocumentClick = (doc) => {
-        if (doc && doc.filename) {
-            localStorage.setItem('lastActiveDocumentId', doc.filename);
+        if (doc && doc.vectorId) {
+            const userId = user?._id;
+            if (userId) {
+                localStorage.setItem(`lastActiveDocId_${userId}`, doc.vectorId);
+            }
             window.location.href = '/dashboard';
         }
     };

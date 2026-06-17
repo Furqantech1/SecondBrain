@@ -1,16 +1,17 @@
 const { GoogleGenerativeAIEmbeddings } = require('@langchain/google-genai');
 const { GoogleGenerativeAI, TaskType } = require('@google/generative-ai');
 const pinecone = require('../services/pineconeService');
+const Document = require('../models/Document');
 
 const INDEX_NAME = process.env.PINECONE_INDEX || 'second-brain';
 
 // Initialize Gemini Chat Model
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 // Use stable alias verified by debug script
-const model = genAI.getGenerativeModel({ model: "models/gemini-flash-latest" });
+const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
 const chat = async (req, res) => {
-    const { question, history, documentId } = req.body;
+    const { question, history, documentId, documentIds } = req.body;
 
     if (!question) {
         return res.status(400).json({ message: 'Question is required' });
@@ -18,7 +19,8 @@ const chat = async (req, res) => {
 
     try {
         console.log(`[Chat] Received question: "${question}"`);
-        if (documentId) console.log(`[Chat] Context restricted to documentId: ${documentId}`);
+        if (documentIds && documentIds.length > 0) console.log(`[Chat] Multi-document query: ${documentIds.length} documents`);
+        else if (documentId) console.log(`[Chat] Context restricted to documentId: ${documentId}`);
 
         // 1. Generate Embedding for the Question
         console.log('[Chat] Generating embedding...');
@@ -43,13 +45,14 @@ const chat = async (req, res) => {
         // 2. Query Pinecone for relevant chunks
         console.log(`[Chat] Querying Pinecone index: ${INDEX_NAME}`);
 
-        // Construct Filter
-        // Always filter by user to ensure tenancy
+        // Construct Filter — always filter by user for tenancy
         const filter = {
             user: req.user.id
         };
-        // If documentId is provided, scoped to that document
-        if (documentId) {
+        // Support multi-document select (array) or single document
+        if (documentIds && documentIds.length > 0) {
+            filter.documentId = { $in: documentIds };
+        } else if (documentId) {
             filter.documentId = documentId;
         }
 
@@ -90,9 +93,12 @@ const chat = async (req, res) => {
         
         Answer:`;
 
-        // 5. Generate Answer
+        // 5. Generate Answer (with 30s timeout to prevent infinite hangs)
         try {
-            const result = await model.generateContent(prompt);
+            const result = await Promise.race([
+                model.generateContent(prompt),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Gemini generation timed out after 30 seconds')), 30000))
+            ]);
             const response = await result.response;
             const text = response.text();
             console.log('[Chat] Answer generated successfully.');
@@ -104,7 +110,11 @@ const chat = async (req, res) => {
             matches.forEach(m => {
                 if (!seenFilenames.has(m.metadata.filename)) {
                     seenFilenames.add(m.metadata.filename);
-                    uniqueSources.push({ filename: m.metadata.filename, score: m.score });
+                    uniqueSources.push({ 
+                        filename: m.metadata.filename, 
+                        score: m.score,
+                        snippet: m.metadata.text.substring(0, 200) + (m.metadata.text.length > 200 ? '...' : '')
+                    });
                 }
             });
 
@@ -112,8 +122,19 @@ const chat = async (req, res) => {
                 answer: text,
                 sources: uniqueSources
             });
+
+            // Update lastQueried field
+            if (documentId) {
+                await Document.findOneAndUpdate(
+                    { vectorId: documentId, user: req.user.id },
+                    { lastQueried: new Date() }
+                ).catch(err => console.error('[Chat] Failed to update lastQueried:', err));
+            }
         } catch (genError) {
             console.error('[Chat] Generation Error:', genError);
+            if (genError.message.includes('timed out')) {
+                return res.status(504).json({ message: 'AI response timed out. Please try again.' });
+            }
             if (genError.message.includes('429')) {
                 return res.status(429).json({ message: 'Too many requests to Gemini API (Generation). Please wait a moment and try again.' });
             }

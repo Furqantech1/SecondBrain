@@ -123,4 +123,44 @@ const getDocuments = async (req, res) => {
     }
 };
 
-module.exports = { uploadFile, getDocuments };
+const deleteDocument = async (req, res) => {
+    try {
+        const Document = require('../models/Document');
+        const doc = await Document.findOne({ _id: req.params.id, user: req.user.id });
+
+        if (!doc) {
+            return res.status(404).json({ message: 'Document not found' });
+        }
+
+        // Delete vectors from Pinecone
+        try {
+            const index = pinecone.index(INDEX_NAME);
+            // Pinecone serverless: delete by metadata filter
+            await index.deleteMany({
+                filter: { documentId: doc.vectorId, user: req.user.id }
+            });
+            console.log(`[Delete] Removed vectors for document: ${doc.filename}`);
+        } catch (pineconeError) {
+            console.error('[Delete] Pinecone deletion error (continuing):', pineconeError.message);
+            // Continue even if Pinecone fails — still clean up MongoDB
+        }
+
+        // Delete MongoDB record
+        await Document.findByIdAndDelete(req.params.id);
+
+        // Delete associated highlights
+        try {
+            const Highlight = require('../models/Highlight');
+            await Highlight.deleteMany({ document: req.params.id });
+        } catch (hlError) {
+            console.error('[Delete] Highlight cleanup error (non-critical):', hlError.message);
+        }
+
+        res.json({ message: 'Document and vectors deleted successfully' });
+    } catch (error) {
+        console.error('Delete Document Error:', error);
+        res.status(500).json({ message: 'Error deleting document', error: error.message });
+    }
+};
+
+module.exports = { uploadFile, getDocuments, deleteDocument };

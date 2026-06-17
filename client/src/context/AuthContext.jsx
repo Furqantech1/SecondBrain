@@ -3,6 +3,20 @@ import api from '../api/axios';
 
 const AuthContext = createContext();
 
+// Clear all user-specific session data from localStorage
+const clearUserSessionData = () => {
+    const keysToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('chatHistory_') || key.startsWith('lastActiveDocId_'))) {
+            keysToRemove.push(key);
+        }
+    }
+    keysToRemove.forEach(k => localStorage.removeItem(k));
+    // Also remove legacy non-namespaced key
+    localStorage.removeItem('lastActiveDocumentId');
+};
+
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -17,6 +31,7 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (email, password) => {
         try {
+            clearUserSessionData(); // Clear previous user's data
             const { data } = await api.post('/api/auth/login', { email, password });
 
             localStorage.setItem('userInfo', JSON.stringify(data));
@@ -32,6 +47,7 @@ export const AuthProvider = ({ children }) => {
 
     const signup = async (email, password) => {
         try {
+            clearUserSessionData(); // Clear any stale data
             const { data } = await api.post('/api/auth/signup', { email, password });
 
             localStorage.setItem('userInfo', JSON.stringify(data));
@@ -73,8 +89,7 @@ export const AuthProvider = ({ children }) => {
 
     const logout = () => {
         localStorage.removeItem('userInfo');
-        localStorage.removeItem('lastActiveDocumentId');
-        // Optional: clear all chat history or rely on component logic to clear/refresh
+        clearUserSessionData(); // Remove all user-specific data
         setUser(null);
     };
 

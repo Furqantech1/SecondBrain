@@ -21,6 +21,9 @@ const documentSchema = mongoose.Schema(
         vectorId: {
             type: String, // Prefix used in Pinecone
         },
+        lastQueried: {
+            type: Date,
+        },
     },
     {
         timestamps: true,

@@ -1,59 +1,172 @@
+@import url('https://cdn.jsdelivr.net/npm/geist@1/dist/fonts/geist-sans/style.css');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-    html {
-        scroll-behavior: smooth;
-    }
+:root {
+  /* Surfaces */
+  --surface-base:     #0D0D0F;
+  --surface-raised:   #131316;
+  --surface-overlay:  #1A1A1E;
+  --surface-sunken:   #0A0A0C;
 
-    body {
-        @apply bg-brain-dark text-white font-sans antialiased selection:bg-brain-primary selection:text-brain-dark;
-        /* Verified Deep Space Gradient */
-        background-image:
-            radial-gradient(circle at 50% -20%, rgba(123, 97, 255, 0.15) 0%, transparent 40%),
-            radial-gradient(circle at 80% 20%, rgba(0, 224, 255, 0.1) 0%, transparent 30%);
-        background-attachment: fixed;
-    }
+  /* Borders */
+  --border-subtle:    rgba(255,255,255,0.06);
+  --border-default:   rgba(255,255,255,0.10);
+  --border-emphasis:  rgba(255,255,255,0.18);
+
+  /* Text */
+  --text-primary:     #F0EEE8;
+  --text-secondary:   #8A8882;
+  --text-tertiary:    #545250;
+
+  /* Accent — used ONLY for primary CTA and live status indicators */
+  --accent:           #C8F135;
+  --accent-hover:     #D9FF50;
+  --accent-text:      #0D0D0F;
+
+  /* Semantic */
+  --status-active:    #22C55E;
+  --status-pending:   #EAB308;
+  --status-error:     #EF4444;
+  --status-idle:      #545250;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--surface-base);
+    color: var(--text-primary);
+    font-family: 'Geist Sans', 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background: rgba(200, 241, 53, 0.2);
+    color: var(--text-primary);
+  }
 }
 
 @layer components {
-    .glass-panel {
-        @apply bg-brain-panel backdrop-blur-2xl border border-white/10 rounded-2xl shadow-glass;
-    }
+  /* Primary button — accent background */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: var(--accent);
+    color: var(--accent-text);
+    font-weight: 600;
+    font-size: 13px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: background 120ms ease;
+  }
+  .btn-primary:hover {
+    background: var(--accent-hover);
+  }
 
-    .glass-input {
-        @apply w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-400 focus:ring-2 focus:ring-brain-primary/50 focus:border-transparent outline-none transition-all duration-300;
-    }
+  /* Ghost button — border only */
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-size: 13px;
+    border-radius: 6px;
+    border: 1px solid var(--border-default);
+    cursor: pointer;
+    transition: border-color 120ms ease, color 120ms ease;
+  }
+  .btn-ghost:hover {
+    border-color: var(--border-emphasis);
+    color: var(--text-primary);
+  }
 
-    .btn-primary {
-        @apply px-6 py-3 bg-brain-primary text-brain-dark font-bold rounded-xl hover:shadow-neon hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2;
-    }
+  /* Status badges */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    border-radius: 4px;
+    border: 1px solid;
+  }
+  .badge-active {
+    color: var(--status-active);
+    border-color: var(--status-active);
+  }
+  .badge-pending {
+    color: var(--status-pending);
+    border-color: var(--status-pending);
+  }
+  .badge-error {
+    color: var(--status-error);
+    border-color: var(--status-error);
+  }
+  .badge-idle {
+    color: var(--text-tertiary);
+    border-color: var(--border-subtle);
+  }
 
-    .btn-ghost {
-        @apply px-6 py-3 bg-white/5 border border-white/10 text-white font-medium rounded-xl hover:bg-white/10 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300;
-    }
+  /* Custom scrollbar */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--border-subtle);
+    border-radius: 2px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--border-emphasis);
+  }
 
-    .text-display {
-        @apply font-display tracking-tight;
-    }
+  /* Meta/label text */
+  .text-meta {
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+  }
+}
 
-    /* Custom Scrollbar */
-    .custom-scrollbar::-webkit-scrollbar {
-        width: 6px;
-    }
-    
-    .custom-scrollbar::-webkit-scrollbar-track {
-        background: rgba(255, 255, 255, 0.02);
-        border-radius: 10px;
-    }
-    
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 10px;
-    }
-    
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-        background: rgba(255, 255, 255, 0.2);
-    }
+/* Shimmer keyframe for skeleton loading */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--surface-overlay) 25%,
+    rgba(255,255,255,0.06) 50%,
+    var(--surface-overlay) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s linear infinite;
 }

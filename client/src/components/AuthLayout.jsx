@@ -1,117 +1,110 @@
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Brain, Zap, Shield } from 'lucide-react';
-import DeepSpaceBackground from './DeepSpaceBackground';
+import { Brain, Zap, Shield, Database } from 'lucide-react';
+import { fadeUp, stagger } from '../lib/motion';
 
 const features = [
-    { icon: Brain, text: 'AI-Powered RAG', color: 'from-cyan-400 to-blue-500' },
-    { icon: Zap, text: 'Instant Recall', color: 'from-amber-400 to-orange-500' },
-    { icon: Shield, text: 'Private & Secure', color: 'from-emerald-400 to-green-500' },
+  { icon: Brain, text: 'AI-Powered RAG' },
+  { icon: Zap, text: 'Instant Recall' },
+  { icon: Shield, text: 'Private & Secure' },
 ];
 
 const AuthLayout = () => {
-    const location = useLocation();
-    const navigate = useNavigate();
-    const isSignup = location.pathname === '/signup';
+  const location = useLocation();
 
-    return (
-        <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
-            className="min-h-screen w-full flex overflow-hidden"
-        >
-            {/* Left Side - Visual & Branding (60% width) */}
-            <div className="hidden lg:flex lg:w-[60%] relative bg-brain-dark items-center justify-center p-12 overflow-hidden">
-                {/* Dynamic Background Elements */}
-                <div className="absolute inset-0 z-0">
-                    <div className="absolute top-[-20%] left-[-10%] w-[800px] h-[800px] bg-brain-primary/20 rounded-full blur-[120px] animate-pulse-slow"></div>
-                    <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-brain-secondary/20 rounded-full blur-[100px] animate-pulse-slow delay-1000"></div>
-                </div>
+  return (
+    <div className="min-h-screen w-full flex overflow-hidden" style={{ background: 'var(--surface-base)' }}>
+      {/* Left Side - Visual & Branding (60% width) */}
+      <div className="hidden lg:flex lg:w-[60%] relative flex-col justify-center p-16 border-r border-border-subtle overflow-hidden">
+        
+        {/* Subtle grid pattern background */}
+        <div
+          className="absolute inset-0 z-0 opacity-[0.03]"
+          style={{
+            backgroundImage: `linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)`,
+            backgroundSize: '40px 40px',
+          }}
+        />
 
-                {/* Grid overlay */}
+        {/* Content */}
+        <div className="relative z-10 max-w-xl">
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={stagger(0.05, 0.05)}
+            className="space-y-10"
+          >
+            {/* Logo */}
+            <motion.div variants={fadeUp} className="flex items-center gap-3 mb-12">
+              <img src="/logo.jpg" alt="Logo" className="w-10 h-10 rounded-lg" />
+              <span className="font-mono text-[14px] font-medium tracking-[0.12em] text-text-primary">
+                SECOND BRAIN
+              </span>
+            </motion.div>
+
+            {/* Headline */}
+            <motion.div variants={fadeUp} className="space-y-4">
+              <h1 className="text-[48px] md:text-[64px] font-bold tracking-tight text-text-primary leading-[1.1]">
+                Your External <br />
+                <span style={{ color: 'var(--accent)' }}>Neural Network.</span>
+              </h1>
+              <p className="text-[16px] text-text-secondary leading-relaxed max-w-md">
+                Upload documents, retain knowledge, and query your personal intelligence database with zero latency.
+              </p>
+            </motion.div>
+
+            {/* Feature Chips */}
+            <motion.div variants={fadeUp} className="flex flex-wrap gap-3 pt-4">
+              {features.map((feat, i) => (
                 <div
-                    className="absolute inset-0 z-[1]"
-                    style={{
-                        backgroundImage: `linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)`,
-                        backgroundSize: '70px 70px',
-                    }}
-                />
-
-                {/* Content */}
-                <div className="relative z-10 max-w-2xl text-left space-y-8">
-                    <div className="flex items-center gap-3 mb-8">
-                        <img src="/logo.jpg" alt="Logo" className="w-12 h-12 rounded-xl shadow-neon" />
-                        <h1 className="text-4xl font-bold tracking-tighter text-white">Second Brain</h1>
-                    </div>
-
-                    <h2 className="text-6xl font-display font-bold leading-tight text-transparent bg-clip-text bg-gradient-to-r from-white to-white/50">
-                        Your External <br />
-                        <span className="text-brain-primary">Neural Network.</span>
-                    </h2>
-
-                    <p className="text-xl text-brain-text-secondary/80 leading-relaxed max-w-lg">
-                        Upload documents, retain knowledge, and query your personal intelligence database with zero latency.
-                    </p>
-
-                    {/* Feature Chips — with gradient icon backgrounds */}
-                    <div className="flex gap-4 pt-4">
-                        {features.map((feat, i) => (
-                            <div
-                                key={i}
-                                className="flex items-center gap-2.5 px-5 py-2.5 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm text-sm font-medium text-white/80"
-                            >
-                                <div className={`w-7 h-7 rounded-lg bg-gradient-to-br ${feat.color} flex items-center justify-center shadow-lg`}>
-                                    <feat.icon size={14} className="text-white" />
-                                </div>
-                                {feat.text}
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Stats row */}
-                    <div className="flex items-center gap-8 pt-4">
-                        <div>
-                            <p className="text-2xl font-bold text-white">10K+</p>
-                            <p className="text-sm text-brain-text-secondary/60 mt-0.5">Documents Indexed</p>
-                        </div>
-                        <div className="w-px h-10 bg-white/10" />
-                        <div>
-                            <p className="text-2xl font-bold text-white">99.9%</p>
-                            <p className="text-sm text-brain-text-secondary/60 mt-0.5">Uptime</p>
-                        </div>
-                        <div className="w-px h-10 bg-white/10" />
-                        <div>
-                            <p className="text-2xl font-bold text-white">&lt;2s</p>
-                            <p className="text-sm text-brain-text-secondary/60 mt-0.5">Avg Response</p>
-                        </div>
-                    </div>
+                  key={i}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full border border-border-default bg-surface-raised text-[13px] font-medium text-text-secondary"
+                >
+                  <feat.icon size={14} style={{ color: 'var(--accent)' }} />
+                  {feat.text}
                 </div>
-            </div>
+              ))}
+            </motion.div>
 
-            {/* Right Side - Form (40% width) */}
-            <div className="w-full lg:w-[40%] flex items-center justify-center p-8 relative bg-brain-dark/95 backdrop-blur-xl">
-                {/* Mobile Background Elements (visible only on small screens) */}
-                <div className="lg:hidden absolute top-[-10%] right-[-10%] w-[300px] h-[300px] bg-brain-primary/20 rounded-full blur-[80px]"></div>
+            {/* Stats row */}
+            <motion.div variants={fadeUp} className="flex items-center gap-8 pt-8 mt-8 border-t border-border-subtle">
+              <div>
+                <p className="text-[24px] font-bold text-text-primary">10K+</p>
+                <p className="text-meta normal-case mt-1">Documents Indexed</p>
+              </div>
+              <div className="w-px h-8 bg-border-subtle" />
+              <div>
+                <p className="text-[24px] font-bold text-text-primary">99.9%</p>
+                <p className="text-meta normal-case mt-1">Uptime</p>
+              </div>
+              <div className="w-px h-8 bg-border-subtle" />
+              <div>
+                <p className="text-[24px] font-bold text-text-primary">&lt;2s</p>
+                <p className="text-meta normal-case mt-1">Avg Response</p>
+              </div>
+            </motion.div>
+          </motion.div>
+        </div>
+      </div>
 
-                <div className="w-full max-w-md space-y-8">
-                    <AnimatePresence mode="wait">
-                        <motion.div
-                            key={location.pathname}
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
-                            transition={{ duration: 0.3 }}
-                            className="w-full max-w-sm mx-auto"
-                        >
-                            <Outlet />
-                        </motion.div>
-                    </AnimatePresence>
-                </div>
-            </div>
-        </motion.div>
-    );
+      {/* Right Side - Form (40% width) */}
+      <div className="w-full lg:w-[40%] flex items-center justify-center p-8 bg-surface-base">
+        <div className="w-full max-w-sm">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={location.pathname}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Outlet />
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default AuthLayout;

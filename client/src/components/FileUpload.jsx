@@ -149,10 +149,10 @@ const FileUpload = ({ onUploadSuccess }) => {
         >
           <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center cursor-pointer w-full">
             <Upload size={20} className="mb-4" style={{ color: 'var(--text-tertiary)' }} />
-            <p className="text-[14px] mb-1" style={{ color: isDragOver ? 'var(--text-primary)' : 'var(--text-tertiary)' }}>
+            <p className="text-[15px] mb-1" style={{ color: isDragOver ? 'var(--text-primary)' : 'var(--text-tertiary)' }}>
               {isDragOver ? 'Release to upload' : 'Drop a PDF here'}
             </p>
-            <p className="text-[13px]" style={{ color: 'var(--text-tertiary)' }}>
+            <p className="text-[14px]" style={{ color: 'var(--text-tertiary)' }}>
               or click to browse
             </p>
             <input id="dropzone-file" type="file" className="hidden" accept=".pdf" onChange={handleFileChange} />
@@ -173,8 +173,8 @@ const FileUpload = ({ onUploadSuccess }) => {
           <div className="flex items-center gap-3 min-w-0">
             <FileText size={16} style={{ color: 'var(--text-tertiary)' }} className="shrink-0" />
             <div className="min-w-0">
-              <p className="text-[13px] text-text-primary truncate" style={{ maxWidth: '180px' }}>{file.name}</p>
-              <p className="text-meta text-[10px] normal-case">{formatFileSize(file.size)}</p>
+              <p className="text-[14px] text-text-primary truncate" style={{ maxWidth: '180px' }}>{file.name}</p>
+              <p className="text-meta text-[12px] normal-case">{formatFileSize(file.size)}</p>
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -186,7 +186,7 @@ const FileUpload = ({ onUploadSuccess }) => {
               whileTap={{ scale: 0.97 }}
               transition={SPRING_SNAPPY}
               onClick={uploadFile}
-              className="btn-primary text-[11px] uppercase tracking-[0.02em] px-4 py-1.5"
+              className="btn-primary text-[12px] uppercase tracking-[0.02em] px-4 py-1.5"
             >
               Ingest
             </motion.button>
@@ -207,8 +207,8 @@ const FileUpload = ({ onUploadSuccess }) => {
           <div className="flex items-center gap-3 min-w-0">
             <FileText size={16} style={{ color: 'var(--text-tertiary)' }} className="shrink-0" />
             <div className="min-w-0">
-              <p className="text-[13px] text-text-primary truncate" style={{ maxWidth: '160px' }}>{file?.name || 'Document'}</p>
-              <p className="text-meta text-[10px] normal-case">{file ? formatFileSize(file.size) : ''}</p>
+              <p className="text-[14px] text-text-primary truncate" style={{ maxWidth: '160px' }}>{file?.name || 'Document'}</p>
+              <p className="text-meta text-[12px] normal-case">{file ? formatFileSize(file.size) : ''}</p>
             </div>
           </div>
           <AnimatePresence mode="wait">
@@ -218,7 +218,7 @@ const FileUpload = ({ onUploadSuccess }) => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -12 }}
               transition={{ duration: 0.15, ease: 'easeOut' }}
-              className="text-meta text-[10px] shrink-0"
+              className="text-meta text-[12px] shrink-0"
             >
               {STAGES[uploadStage]}
             </motion.span>
@@ -249,11 +249,11 @@ const FileUpload = ({ onUploadSuccess }) => {
         >
           <div className="flex items-center gap-3">
             <Check size={16} style={{ color: 'var(--status-active)' }} />
-            <p className="text-[13px] text-text-primary">{message || 'Indexed successfully'}</p>
+            <p className="text-[14px] text-text-primary">{message || 'Indexed successfully'}</p>
           </div>
           <button
             onClick={clearFile}
-            className="btn-ghost text-[11px] uppercase tracking-[0.02em] px-3 py-1 gap-1"
+            className="btn-ghost text-[12px] uppercase tracking-[0.02em] px-3 py-1 gap-1"
           >
             Upload another
           </button>
@@ -275,11 +275,11 @@ const FileUpload = ({ onUploadSuccess }) => {
         >
           <div className="flex items-center gap-3">
             <AlertTriangle size={16} style={{ color: 'var(--status-error)' }} />
-            <p className="text-[13px] text-text-primary">{message}</p>
+            <p className="text-[14px] text-text-primary">{message}</p>
           </div>
           <button
             onClick={clearFile}
-            className="btn-ghost text-[11px] uppercase tracking-[0.02em] px-3 py-1"
+            className="btn-ghost text-[12px] uppercase tracking-[0.02em] px-3 py-1"
             style={{ color: 'var(--status-error)', borderColor: 'rgba(239, 68, 68, 0.3)' }}
           >
             Try Again

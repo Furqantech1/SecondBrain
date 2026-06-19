@@ -7,8 +7,31 @@ const INDEX_NAME = process.env.PINECONE_INDEX || 'second-brain';
 
 // Initialize Gemini Chat Model
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-// Use stable alias verified by debug script
-const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+// gemini-2.5-flash — upgraded from 2.0-flash which had its daily quota exhausted
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+// ─── Retry Utility ───────────────────────────────────────────────────────────
+// Retries an async function with exponential backoff when a 429 error is hit.
+// This is essential for the Google AI Studio Free Tier which has strict RPM/TPM limits.
+const retryWithBackoff = async (fn, { maxRetries = 4, baseDelayMs = 3000, label = 'API' } = {}) => {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            return await fn();
+        } catch (error) {
+            const is429 = error.message?.includes('429') || error.status === 429;
+
+            if (is429 && attempt < maxRetries) {
+                // Exponential backoff: 3s, 6s, 12s, 24s... plus random jitter
+                const delayMs = baseDelayMs * Math.pow(2, attempt - 1) + Math.random() * 1000;
+                console.warn(`[${label}] ⚠️ Rate limited (429). Retry ${attempt}/${maxRetries} in ${Math.round(delayMs / 1000)}s...`);
+                await new Promise(resolve => setTimeout(resolve, delayMs));
+            } else {
+                // Not a 429, or we exhausted all retries — rethrow
+                throw error;
+            }
+        }
+    }
+};
 
 const chat = async (req, res) => {
     const { question, history, documentId, documentIds } = req.body;
@@ -22,21 +45,26 @@ const chat = async (req, res) => {
         if (documentIds && documentIds.length > 0) console.log(`[Chat] Multi-document query: ${documentIds.length} documents`);
         else if (documentId) console.log(`[Chat] Context restricted to documentId: ${documentId}`);
 
-        // 1. Generate Embedding for the Question
+        // 1. Generate Embedding for the Question (with retry-backoff)
         console.log('[Chat] Generating embedding...');
         const embeddings = new GoogleGenerativeAIEmbeddings({
             apiKey: process.env.GEMINI_API_KEY,
             modelName: "models/gemini-embedding-001",
             taskType: TaskType.RETRIEVAL_QUERY,
+            maxRetries: 5, // LangChain's own built-in retry
+            maxConcurrency: 1
         });
 
         let queryEmbedding;
         try {
-            queryEmbedding = await embeddings.embedQuery(question);
+            queryEmbedding = await retryWithBackoff(
+                () => embeddings.embedQuery(question),
+                { label: 'Chat Embedding', maxRetries: 4, baseDelayMs: 3000 }
+            );
         } catch (embedError) {
-            console.error('[Chat] Embedding Error:', embedError);
-            if (embedError.message.includes('429')) {
-                return res.status(429).json({ message: 'Too many requests to Gemini API (Embedding). Please wait a moment and try again.' });
+            console.error('[Chat] Embedding Error after all retries:', embedError.message);
+            if (embedError.message?.includes('429')) {
+                return res.status(429).json({ message: 'Rate limit reached. Wait a moment, then retry.' });
             }
             throw embedError;
         }
@@ -93,12 +121,15 @@ const chat = async (req, res) => {
         
         Answer:`;
 
-        // 5. Generate Answer (with 30s timeout to prevent infinite hangs)
+        // 5. Generate Answer (with retry-backoff + 30s timeout per attempt)
         try {
-            const result = await Promise.race([
-                model.generateContent(prompt),
-                new Promise((_, reject) => setTimeout(() => reject(new Error('Gemini generation timed out after 30 seconds')), 30000))
-            ]);
+            const result = await retryWithBackoff(
+                () => Promise.race([
+                    model.generateContent(prompt),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Gemini generation timed out after 30 seconds')), 30000))
+                ]),
+                { label: 'Chat Generation', maxRetries: 3, baseDelayMs: 5000 }
+            );
             const response = await result.response;
             const text = response.text();
             console.log('[Chat] Answer generated successfully.');
@@ -131,12 +162,12 @@ const chat = async (req, res) => {
                 ).catch(err => console.error('[Chat] Failed to update lastQueried:', err));
             }
         } catch (genError) {
-            console.error('[Chat] Generation Error:', genError);
-            if (genError.message.includes('timed out')) {
+            console.error('[Chat] Generation Error after all retries:', genError.message);
+            if (genError.message?.includes('timed out')) {
                 return res.status(504).json({ message: 'AI response timed out. Please try again.' });
             }
-            if (genError.message.includes('429')) {
-                return res.status(429).json({ message: 'Too many requests to Gemini API (Generation). Please wait a moment and try again.' });
+            if (genError.message?.includes('429')) {
+                return res.status(429).json({ message: 'Rate limit reached. Wait a moment, then retry.' });
             }
             throw genError;
         }

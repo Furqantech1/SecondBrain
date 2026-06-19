@@ -30,55 +30,107 @@ const uploadFile = async (req, res) => {
 
         // 3. Generate Embeddings using Gemini
         console.log(`[Upload] Initializing Embeddings with model: text-embedding-004`);
+        
+        // 3. Clean Integration: Configure maxConcurrency to help LangChain manage internal API queues
         const embeddings = new GoogleGenerativeAIEmbeddings({
             apiKey: process.env.GEMINI_API_KEY,
             modelName: "models/gemini-embedding-001",
             taskType: TaskType.RETRIEVAL_DOCUMENT,
+            maxConcurrency: 1, // Restrict concurrent API calls
+            maxRetries: 3      // Built-in resilience for temporary errors
         });
 
         // Prepare vectors for Pinecone
-        // We process in batches to avoid hitting API limits
         const vectors = [];
-
-        // We need to generate embeddings for each chunk's content
-        // Note: LangChain's embeddings.embedDocuments takes an array of strings
         const chunkTexts = chunks.map(chunk => chunk.pageContent);
 
         console.log(`[Upload] Generating embeddings for ${chunkTexts.length} chunks...`);
-        let chunkEmbeddings;
-        try {
-            chunkEmbeddings = await embeddings.embedDocuments(chunkTexts);
-        } catch (embError) {
-            console.error('[Upload] Embedding Generation Failed:', embError);
-            throw new Error(`Embedding Generation Failed: ${embError.message}`);
-        }
-        console.log(`[Upload] Embeddings generated successfully.`);
-        console.log(`[Upload] chunks count: ${chunkEmbeddings.length}`);
-        if (chunkEmbeddings.length > 0) {
-            console.log(`[Upload] First chunk embedding length: ${chunkEmbeddings[0] ? chunkEmbeddings[0].length : 'undefined'}`);
-            console.log(`[Upload] First chunk text preview: ${chunkTexts[0].substring(0, 50)}...`);
+        let chunkEmbeddings = [];
+
+        // Utility: delay function for rate limiting
+        const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+        
+        // Utility: retry with exponential backoff for 429 errors
+        const retryWithBackoff = async (fn, maxRetries = 3, baseDelayMs = 5000) => {
+            for (let attempt = 1; attempt <= maxRetries; attempt++) {
+                try {
+                    return await fn();
+                } catch (error) {
+                    const is429 = error.message?.includes('429') || error.status === 429;
+                    if (is429 && attempt < maxRetries) {
+                        const waitMs = baseDelayMs * Math.pow(2, attempt - 1) + Math.random() * 1000;
+                        console.warn(`[Upload] ⚠️ Rate limited (429). Retry ${attempt}/${maxRetries} in ${Math.round(waitMs / 1000)}s...`);
+                        await delay(waitMs);
+                    } else {
+                        throw error;
+                    }
+                }
+            }
+        };
+
+        // Staggered Batch Execution with Rate Limit Jitter
+        // BATCH_SIZE = 1: Process one chunk at a time to stay well under Free Tier RPM
+        // JITTER_MS = 4000: 4 seconds between chunks (Free Tier allows ~15 RPM for embeddings)
+        const BATCH_SIZE = 1;
+        const JITTER_MS = 4000;
+
+        for (let i = 0; i < chunkTexts.length; i += BATCH_SIZE) {
+            const batch = chunkTexts.slice(i, i + BATCH_SIZE);
+            console.log(`[Upload] Processing chunk ${i + 1} of ${chunkTexts.length}`);
+            
+            try {
+                // Retry each batch up to 3 times with exponential backoff on 429
+                const batchEmbeddings = await retryWithBackoff(
+                    () => embeddings.embedDocuments(batch),
+                    3,    // maxRetries
+                    5000  // baseDelayMs (5s, 10s, 20s)
+                );
+                chunkEmbeddings.push(...batchEmbeddings);
+            } catch (embError) {
+                console.error(`[Upload] ❌ Embedding failed for chunk ${i} after all retries:`, embError.message);
+                
+                // Error Resilience: push nulls to keep indices aligned, continue processing
+                for (let j = 0; j < batch.length; j++) {
+                    chunkEmbeddings.push(null);
+                }
+            }
+
+            // Apply Rate Limit Jitter between chunks (skip delay after the final chunk)
+            if (i + BATCH_SIZE < chunkTexts.length) {
+                await delay(JITTER_MS);
+            }
         }
 
+        console.log(`[Upload] Embeddings loop completed.`);
+
+        // Build Pinecone vectors, filtering out any chunks that failed to embed
         for (let i = 0; i < chunks.length; i++) {
-            vectors.push({
-                id: `${req.file.filename}_${i}`,
-                values: chunkEmbeddings[i],
-                metadata: {
-                    text: chunks[i].pageContent,
-                    filename: req.file.originalname,
-                    page: 1,
-                    user: req.user.id,
-                    documentId: req.file.filename
-                }
-            });
+            if (chunkEmbeddings[i]) {
+                vectors.push({
+                    id: `${req.file.filename}_${i}`,
+                    values: chunkEmbeddings[i],
+                    metadata: {
+                        text: chunks[i].pageContent,
+                        filename: req.file.originalname,
+                        page: 1,
+                        user: req.user.id,
+                        documentId: req.file.filename
+                    }
+                });
+            } else {
+                console.warn(`[Upload] ⚠️ Skipping chunk ${i} due to missing embedding from earlier error.`);
+            }
         }
 
         // 4. Store in Pinecone
         const index = pinecone.index(INDEX_NAME);
-        console.log(`[Upload] Upserting to Pinecone index: ${INDEX_NAME}`);
-
-        // batch upsert (Pinecone limit is usually 1000 vectors per call, our chunks likely < 1000 for single file)
-        await index.upsert(vectors);
+        if (vectors.length > 0) {
+            console.log(`[Upload] Upserting ${vectors.length} vectors to Pinecone index: ${INDEX_NAME}`);
+            // batch upsert (Pinecone limit is usually 1000 vectors per call)
+            await index.upsert(vectors);
+        } else {
+            console.warn(`[Upload] ⚠️ No successful embeddings generated. Skipping Pinecone upsert.`);
+        }
 
         const Document = require('../models/Document');
 
@@ -107,6 +159,8 @@ const uploadFile = async (req, res) => {
 
     } catch (error) {
         console.error('Upload Error:', error);
+        // Always clean up the temp file, even on failure
+        try { if (req.file?.path) fs.unlinkSync(req.file.path); } catch (_) {}
         res.status(500).json({ message: 'Error processing file', error: error.message });
     }
 };

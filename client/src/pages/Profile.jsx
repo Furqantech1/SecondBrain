@@ -4,7 +4,6 @@ import api from '../api/axios';
 import { motion } from 'framer-motion';
 import { User, Mail, Phone, MapPin, Edit, FileText, Camera, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import DeepSpaceBackground from '../components/DeepSpaceBackground';
 
 const Profile = () => {
     const { user } = useAuth();
@@ -132,8 +131,8 @@ const Profile = () => {
 
     if (!user) {
         return (
-            <div className="min-h-screen flex items-center justify-center text-white bg-brain-dark">
-                Loading Profile...
+            <div className="min-h-screen flex items-center justify-center text-text-primary bg-surface-base">
+                <span className="text-[14px]">Loading Profile...</span>
             </div>
         );
     }
@@ -144,21 +143,21 @@ const Profile = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5 }}
-            className="min-h-screen text-white font-sans selection:bg-brain-primary selection:text-brain-dark relative"
+            className="min-h-screen font-sans"
+            style={{ background: 'var(--surface-base)' }}
         >
-            <DeepSpaceBackground />
-
-            <div className="relative z-10 max-w-4xl mx-auto px-6 py-12">
+            <div className="max-w-[1080px] mx-auto px-6 py-12 md:py-16">
 
                 {/* Header */}
-                <div className="flex items-center gap-4 mb-8">
+                <div className="flex items-center gap-4 mb-10">
                     <button
                         onClick={() => navigate('/dashboard')}
-                        className="p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors border border-white/10"
+                        className="p-2 rounded-md hover:bg-surface-overlay transition-colors border border-border-default"
+                        style={{ background: 'var(--surface-raised)' }}
                     >
-                        <ArrowLeft className="w-5 h-5 text-slate-300" />
+                        <ArrowLeft className="w-5 h-5 text-text-secondary" />
                     </button>
-                    <h1 className="text-3xl font-display font-bold">Your Profile</h1>
+                    <h1 className="text-[28px] font-semibold tracking-tight text-text-primary">Your Profile</h1>
                 </div>
 
                 {message.text && (
@@ -170,30 +169,28 @@ const Profile = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     {/* Left Column: Avatar & Basic Info */}
                     <div className="md:col-span-1 space-y-6">
-                        <div className="glass-panel p-6 flex flex-col items-center text-center relative overflow-hidden group">
-                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brain-primary to-brain-secondary opacity-50"></div>
-
-                            <div className="relative w-32 h-32 mb-6 group-hover:scale-105 transition-transform duration-300">
-                                <div className="w-full h-full rounded-full bg-gradient-to-br from-slate-700 to-slate-900 border-4 border-white/10 flex items-center justify-center shadow-2xl relative overflow-hidden">
+                        <div className="glass-panel p-8 flex flex-col items-center text-center">
+                            <div className="relative w-32 h-32 mb-6 group">
+                                <div className="w-full h-full rounded-full bg-surface-overlay border border-border-default flex items-center justify-center overflow-hidden">
                                     {user?.profilePicture ? (
                                         <img src={user.profilePicture} alt="Profile" className="w-full h-full object-cover" />
                                     ) : (
-                                        <User className="w-12 h-12 text-slate-500" />
+                                        <User className="w-12 h-12 text-text-tertiary" />
                                     )}
                                 </div>
-                                <label className={`absolute bottom-0 right-0 p-2 rounded-full bg-brain-primary text-brain-dark hover:brightness-110 transition-all shadow-lg cursor-pointer ${uploading ? 'opacity-50 cursor-wait' : ''}`}>
+                                <label className={`absolute bottom-0 right-0 p-2.5 rounded-full shadow-md cursor-pointer ${uploading ? 'opacity-50 cursor-wait' : ''}`} style={{ background: 'var(--accent)', color: 'var(--accent-text)' }}>
                                     <Camera className="w-4 h-4" />
                                     <input type="file" className="hidden" accept="image/*" onChange={handleAvatarChange} disabled={uploading} />
                                 </label>
                             </div>
 
-                            <h2 className="text-xl font-bold text-white mb-1">{user?.username || 'Explorer'}</h2>
-                            <p className="text-sm text-slate-400 mb-6">{user?.email}</p>
+                            <h2 className="text-[20px] font-semibold text-text-primary mb-1">{user?.username || 'Explorer'}</h2>
+                            <p className="text-[14px] text-text-secondary mb-8">{user?.email}</p>
 
-                            <div className="w-full space-y-3 pt-6 border-t border-white/10">
+                            <div className="w-full space-y-3 pt-6 border-t border-border-subtle">
                                 <button
                                     onClick={() => setIsEditing(!isEditing)}
-                                    className="w-full py-2 rounded-lg border border-white/10 hover:bg-white/5 transition-colors text-sm font-medium flex items-center justify-center gap-2"
+                                    className="w-full btn-ghost py-2"
                                 >
                                     <Edit className="w-4 h-4" />
                                     {isEditing ? 'Cancel Editing' : 'Edit Profile'}
@@ -201,23 +198,28 @@ const Profile = () => {
                             </div>
                         </div>
 
-                        {/* Recent Activity (Real) */}
+                        {/* Recent Activity */}
                         <div className="glass-panel p-6">
-                            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Upload History</h3>
+                            <h3 className="text-meta mb-4">Recent Uploads</h3>
                             {history.length > 0 ? (
-                                <div className="space-y-4">
-                                    {history.map((doc, i) => (
-                                        <div key={i} onClick={() => handleDocumentClick(doc)} className="flex gap-3 items-start p-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer group border border-transparent hover:border-white/5">
-                                            <div className="mt-1"><FileText className="w-4 h-4 text-brain-secondary group-hover:text-brain-primary transition-colors" /></div>
+                                <div className="space-y-3">
+                                    {history.slice(0, 5).map((doc, i) => (
+                                        <div key={i} onClick={() => handleDocumentClick(doc)} className="flex gap-3 items-start p-3 rounded-md hover:bg-surface-overlay border border-transparent transition-colors cursor-pointer group">
+                                            <div className="mt-0.5"><FileText className="w-4 h-4 text-text-tertiary group-hover:text-text-primary transition-colors" /></div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium text-slate-200 truncate group-hover:text-white transition-colors">{doc.filename}</p>
-                                                <p className="text-xs text-slate-500">{doc.size ? (doc.size / 1024).toFixed(1) : '0'} KB • {doc.createdAt ? new Date(doc.createdAt).toLocaleDateString() : ''}</p>
+                                                <p className="text-[13px] font-medium text-text-secondary truncate group-hover:text-text-primary transition-colors">{doc.filename}</p>
+                                                <p className="text-[11px] text-text-tertiary mt-1">{doc.size ? (doc.size / 1024).toFixed(1) : '0'} KB • {doc.createdAt ? new Date(doc.createdAt).toLocaleDateString() : ''}</p>
                                             </div>
                                         </div>
                                     ))}
+                                    {history.length > 5 && (
+                                        <button onClick={() => navigate('/dashboard')} className="w-full text-center text-[12px] text-text-secondary hover:text-text-primary mt-2 pt-3 border-t border-border-subtle">
+                                            View all in Documents
+                                        </button>
+                                    )}
                                 </div>
                             ) : (
-                                <p className="text-sm text-slate-500 italic">No uploads yet.</p>
+                                <p className="text-[13px] text-text-tertiary">No uploads yet.</p>
                             )}
                         </div>
                     </div>
@@ -225,15 +227,15 @@ const Profile = () => {
                     {/* Right Column: Details Form */}
                     <div className="md:col-span-2">
                         <div className="glass-panel p-8">
-                            <div className="flex items-center justify-between mb-8">
-                                <h3 className="text-xl font-bold">Personal Information</h3>
-                                {!isEditing && <span className="text-xs px-3 py-1 rounded-full bg-green-500/20 text-green-400 border border-green-500/30">Verified User</span>}
+                            <div className="flex items-center justify-between mb-8 pb-4 border-b border-border-subtle">
+                                <h3 className="text-[18px] font-semibold text-text-primary">Personal Information</h3>
+                                {!isEditing && <span className="text-[11px] px-2 py-1 rounded bg-surface-overlay text-status-active border border-border-default uppercase tracking-wider">Verified User</span>}
                             </div>
 
                             <form onSubmit={handleSubmit} className="space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium text-slate-400 flex items-center gap-2">
+                                        <label className="text-[13px] font-medium text-text-secondary flex items-center gap-2">
                                             <User className="w-4 h-4" /> Full Name
                                         </label>
                                         <input
@@ -246,7 +248,7 @@ const Profile = () => {
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium text-slate-400 flex items-center gap-2">
+                                        <label className="text-[13px] font-medium text-text-secondary flex items-center gap-2">
                                             <Mail className="w-4 h-4" /> Email Address
                                         </label>
                                         <input
@@ -257,7 +259,7 @@ const Profile = () => {
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium text-slate-400 flex items-center gap-2">
+                                        <label className="text-[13px] font-medium text-text-secondary flex items-center gap-2">
                                             <Phone className="w-4 h-4" /> Phone Number
                                         </label>
                                         <input
@@ -270,7 +272,7 @@ const Profile = () => {
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium text-slate-400 flex items-center gap-2">
+                                        <label className="text-[13px] font-medium text-text-secondary flex items-center gap-2">
                                             <MapPin className="w-4 h-4" /> Location
                                         </label>
                                         <input
@@ -285,7 +287,7 @@ const Profile = () => {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-slate-400 flex items-center gap-2">
+                                    <label className="text-[13px] font-medium text-text-secondary flex items-center gap-2">
                                         <FileText className="w-4 h-4" /> Bio
                                     </label>
                                     <textarea
@@ -302,7 +304,7 @@ const Profile = () => {
                                         <button
                                             type="button"
                                             onClick={() => setIsEditing(false)}
-                                            className="px-6 py-2 rounded-xl border border-white/10 hover:bg-white/5 transition-colors font-medium"
+                                            className="btn-ghost"
                                         >
                                             Cancel
                                         </button>

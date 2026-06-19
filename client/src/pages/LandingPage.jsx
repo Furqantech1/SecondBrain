@@ -7,9 +7,10 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronDown, ArrowRight, Menu, X } from 'lucide-react';
+import { ChevronDown, ArrowRight, Menu, X, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { API_URL } from '../api/axios';
+import { useAuth } from '../context/AuthContext';
 import { fadeUp, fadeIn, stagger, SPRING_SNAPPY, SPRING_SMOOTH } from '../lib/motion';
 
 const PIPELINE_NODES = ['PDF UPLOAD', 'CHUNK', 'EMBED', 'PINECONE INDEX', 'QUERY', 'GEMINI', 'RESPONSE'];
@@ -102,6 +103,7 @@ const PipelineDiagram = ({ activeIndex }) => (
 
 const LandingPage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activePipelineNode, setActivePipelineNode] = useState(0);
   const [openFaqIndex, setOpenFaqIndex] = useState(null);
@@ -145,10 +147,10 @@ const LandingPage = () => {
       title: 'Instant recall',
       desc: 'Ask a question in plain language. Get a precise, source-cited answer in under two seconds.',
       extra: (
-        <div className="mt-5 p-4 rounded-md bg-surface-sunken border border-border-subtle font-mono text-[12px] leading-relaxed">
+        <div className="mt-6 p-5 rounded-md bg-surface-sunken border border-border-subtle font-mono text-[13px] leading-relaxed">
           <span className="text-text-tertiary">{'>'} </span>
           <span className="text-text-secondary">What are the key findings in Q3?</span>
-          <div className="mt-3 text-text-tertiary">
+          <div className="mt-4 text-text-tertiary">
             <span className="text-accent">SECOND BRAIN</span>
             <span className="text-text-secondary ml-2">Revenue increased 23% YoY, driven primarily by enterprise segment growth of 41%...</span>
           </div>
@@ -161,15 +163,15 @@ const LandingPage = () => {
       title: 'Source citations',
       desc: 'Every answer links back to the exact chunks it was derived from.',
       extra: (
-        <div className="mt-5 space-y-2">
+        <div className="mt-6 space-y-3">
           {[{ file: 'Q3-Report.pdf', chunk: 'chunk 14', score: 0.94 }, { file: 'Q3-Report.pdf', chunk: 'chunk 7', score: 0.87 }].map((s, i) => (
-            <div key={i} className="flex items-center justify-between p-3 rounded-sm border border-border-subtle bg-surface-sunken">
-              <span className="font-mono text-[11px] text-text-secondary">{s.file} -- {s.chunk}</span>
-              <div className="flex items-center gap-2">
-                <div className="w-16 h-1 rounded-sm bg-border-subtle overflow-hidden">
+            <div key={i} className="flex items-center justify-between p-4 rounded-sm border border-border-subtle bg-surface-sunken">
+              <span className="font-mono text-[12px] text-text-secondary">{s.file} -- {s.chunk}</span>
+              <div className="flex items-center gap-3">
+                <div className="w-20 h-1.5 rounded-sm bg-border-subtle overflow-hidden">
                   <div className="h-full bg-accent rounded-sm" style={{ width: `${s.score * 100}%` }} />
                 </div>
-                <span className="font-mono text-[10px] text-text-tertiary">{s.score}</span>
+                <span className="font-mono text-[11px] text-text-tertiary">{s.score}</span>
               </div>
             </div>
           ))}
@@ -182,9 +184,9 @@ const LandingPage = () => {
       title: 'Multi-document',
       desc: 'Query across your entire knowledge base or scope to specific files.',
       extra: (
-        <div className="mt-5 font-mono text-center">
-          <p className="text-[28px] font-semibold text-text-primary tracking-tight">23 <span className="text-[14px] text-text-tertiary">docs</span></p>
-          <p className="text-[14px] text-text-tertiary mt-1">184k vectors</p>
+        <div className="mt-6 font-mono text-center">
+          <p className="text-[36px] font-semibold text-text-primary tracking-tight">23 <span className="text-[16px] text-text-tertiary">docs</span></p>
+          <p className="text-[15px] text-text-tertiary mt-2">184k vectors</p>
         </div>
       ),
     },
@@ -194,8 +196,8 @@ const LandingPage = () => {
       title: '30-day JWT sessions',
       desc: 'Secure token-based authentication with automatic expiry and refresh.',
       extra: (
-        <div className="mt-5 flex items-center gap-2">
-          <div className="flex-1 h-1 bg-border-subtle rounded-sm overflow-hidden">
+        <div className="mt-6 flex items-center gap-3">
+          <div className="flex-1 h-1.5 bg-border-subtle rounded-sm overflow-hidden">
             <motion.div
               className="h-full bg-status-active rounded-sm"
               initial={{ width: '100%' }}
@@ -203,7 +205,7 @@ const LandingPage = () => {
               transition={{ duration: 2, ease: 'easeInOut' }}
             />
           </div>
-          <span className="font-mono text-[10px] text-text-tertiary shrink-0">11d remaining</span>
+          <span className="font-mono text-[12px] text-text-tertiary shrink-0">11d remaining</span>
         </div>
       ),
     },
@@ -213,11 +215,11 @@ const LandingPage = () => {
       title: 'Vector isolation',
       desc: 'Each user gets a fully isolated namespace. Zero data leakage between accounts.',
       extra: (
-        <div className="mt-5 flex gap-3">
+        <div className="mt-6 flex gap-4">
           {['User A', 'User B'].map((u, i) => (
-            <div key={i} className={`flex-1 p-3 rounded-sm border text-center font-mono text-[11px] ${i === 0 ? 'border-border-emphasis text-text-secondary bg-surface-overlay' : 'border-border-subtle text-text-tertiary'}`}>
+            <div key={i} className={`flex-1 p-4 rounded-sm border text-center font-mono text-[13px] ${i === 0 ? 'border-border-emphasis text-text-secondary bg-surface-overlay' : 'border-border-subtle text-text-tertiary'}`}>
               {u}
-              <div className="text-[9px] mt-1 text-text-tertiary">{i === 0 ? '42 vectors' : '18 vectors'}</div>
+              <div className="text-[11px] mt-2 text-text-tertiary">{i === 0 ? '42 vectors' : '18 vectors'}</div>
             </div>
           ))}
         </div>
@@ -229,14 +231,14 @@ const LandingPage = () => {
       title: 'Processing pipeline',
       desc: 'From PDF upload to AI-generated answer in seven deterministic steps.',
       extra: (
-        <div className="mt-5 flex items-center gap-2 overflow-x-auto pb-2">
+        <div className="mt-6 flex items-center gap-2 overflow-x-auto pb-2 custom-scrollbar">
           {PIPELINE_NODES.map((node, i) => (
             <div key={node} className="flex items-center shrink-0">
-              <div className="px-3 py-1.5 font-mono text-[10px] text-text-tertiary border border-border-default rounded-sm bg-surface-sunken whitespace-nowrap">
+              <div className="px-4 py-2 font-mono text-[12px] text-text-tertiary border border-border-default rounded-sm bg-surface-sunken whitespace-nowrap">
                 {node}
               </div>
               {i < PIPELINE_NODES.length - 1 && (
-                <div className="w-4 border-t border-dashed border-border-default mx-1" />
+                <div className="w-5 border-t border-dashed border-border-default mx-2" />
               )}
             </div>
           ))}
@@ -277,18 +279,29 @@ const LandingPage = () => {
           </div>
 
           <div className="hidden md:flex items-center gap-3">
-            <button
-              onClick={() => navigate('/login')}
-              className="btn-ghost text-[12px] uppercase tracking-[0.02em] px-4 py-2"
-            >
-              Sign In
-            </button>
-            <button
-              onClick={() => navigate('/signup')}
-              className="btn-primary text-[12px] uppercase tracking-[0.02em] px-4 py-2"
-            >
-              Start Free
-            </button>
+            {user ? (
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="btn-primary text-[13px] uppercase tracking-[0.02em] px-4 py-2 flex items-center gap-2"
+              >
+                <User size={14} /> Dashboard
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={() => navigate('/login')}
+                  className="btn-ghost text-[12px] uppercase tracking-[0.02em] px-4 py-2"
+                >
+                  Sign In
+                </button>
+                <button
+                  onClick={() => navigate('/signup')}
+                  className="btn-primary text-[12px] uppercase tracking-[0.02em] px-4 py-2"
+                >
+                  Start Free
+                </button>
+              </>
+            )}
           </div>
 
           <button
@@ -341,8 +354,16 @@ const LandingPage = () => {
                 ))}
               </div>
               <div className="absolute bottom-0 left-0 right-0 px-5 pb-6 space-y-2 border-t border-border-subtle pt-5">
-                <button onClick={() => { setIsMobileMenuOpen(false); navigate('/login'); }} className="w-full btn-ghost text-[12px] uppercase tracking-[0.02em]">Sign In</button>
-                <button onClick={() => { setIsMobileMenuOpen(false); navigate('/signup'); }} className="w-full btn-primary text-[12px] uppercase tracking-[0.02em]">Start Free</button>
+                {user ? (
+                  <button onClick={() => { setIsMobileMenuOpen(false); navigate('/dashboard'); }} className="w-full btn-primary text-[12px] uppercase tracking-[0.02em] flex justify-center items-center gap-2">
+                    <User size={14} /> Dashboard
+                  </button>
+                ) : (
+                  <>
+                    <button onClick={() => { setIsMobileMenuOpen(false); navigate('/login'); }} className="w-full btn-ghost text-[12px] uppercase tracking-[0.02em]">Sign In</button>
+                    <button onClick={() => { setIsMobileMenuOpen(false); navigate('/signup'); }} className="w-full btn-primary text-[12px] uppercase tracking-[0.02em]">Start Free</button>
+                  </>
+                )}
               </div>
             </motion.div>
           </>
@@ -376,25 +397,39 @@ const LandingPage = () => {
           </motion.p>
 
           <motion.div variants={fadeUp} className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-10">
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              transition={SPRING_SNAPPY}
-              onClick={() => window.location.href = `${API_URL}/api/auth/google`}
-              className="btn-primary text-[13px] px-6 py-3 gap-3"
-            >
-              <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-4 h-4" alt="Google" />
-              Continue with Google
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              transition={SPRING_SNAPPY}
-              onClick={() => navigate('/login')}
-              className="btn-ghost text-[13px] px-6 py-3"
-            >
-              Sign in with Email
-            </motion.button>
+            {user ? (
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                transition={SPRING_SNAPPY}
+                onClick={() => navigate('/dashboard')}
+                className="btn-primary text-[14px] px-8 py-3.5 gap-3"
+              >
+                Go to Dashboard <ArrowRight size={16} />
+              </motion.button>
+            ) : (
+              <>
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  transition={SPRING_SNAPPY}
+                  onClick={() => window.location.href = `${API_URL}/api/auth/google`}
+                  className="btn-primary text-[14px] px-6 py-3.5 gap-3"
+                >
+                  <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-4 h-4" alt="Google" />
+                  Continue with Google
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  transition={SPRING_SNAPPY}
+                  onClick={() => navigate('/login')}
+                  className="btn-ghost text-[14px] px-6 py-3.5"
+                >
+                  Sign in with Email
+                </motion.button>
+              </>
+            )}
           </motion.div>
 
           <motion.p variants={fadeIn} className="text-meta">
@@ -434,12 +469,12 @@ const LandingPage = () => {
               <motion.div
                 key={idx}
                 variants={fadeUp}
-                className={`${feat.span} bg-surface-raised border border-border-default rounded-md p-8 hover:border-border-emphasis`}
+                className={`${feat.span} bg-surface-raised border border-border-default rounded-md p-8 md:p-10 hover:border-border-emphasis`}
                 style={{ transition: 'border-color 180ms ease' }}
               >
-                <p className="text-meta mb-2">{feat.label}</p>
-                <h3 className="text-[15px] font-medium tracking-[-0.01em] text-text-primary mb-2">{feat.title}</h3>
-                <p className="text-[14px] leading-relaxed text-text-secondary">{feat.desc}</p>
+                <p className="text-meta mb-3 text-[13px]">{feat.label}</p>
+                <h3 className="text-[17px] font-medium tracking-[-0.01em] text-text-primary mb-3">{feat.title}</h3>
+                <p className="text-[15px] leading-relaxed text-text-secondary">{feat.desc}</p>
                 {feat.extra}
               </motion.div>
             ))}
